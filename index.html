@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planner & Strategic Drive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.4.2/lib/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #007BFF;
+            --secondary-color: #6c757d;
+            --accent-gradient: linear-gradient(135deg, #00DDEB 0%, #007BFF 100%);
+            --dark-bg: #121212;
+            --light-bg: #f8f9fa;
+            --glow: 0 0 10px rgba(0, 123, 255, 0.5);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --border-radius: 8px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Orbitron', 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #1a1a1a 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(0, 123, 255, 0.1) 0%, transparent 70%);
+            z-index: -1;
+            animation: pulse 15s infinite ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+        
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            width: 100%;
+            max-width: 1200px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--border-radius);
+            box-shadow: var(--glow);
+            backdrop-filter: blur(10px);
+            margin: 2rem 0;
+        }
+        
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: var(--border-radius);
+        }
+        
+        .app-header h1 {
+            margin: 0;
+            font-size: 28px;
+            text-shadow: var(--glow);
+            color: #00DDEB;
+        }
+        
+        .toggle-space {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .planner-drive, .strategic-drive {
+            width: 100%;
+        }
+        
+        .planner-list, .canvas-section, .strategic-drive, .node-list, .analytics-section, .prioritization-toolbar, .current-planner-info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--glow);
+            animation: fadeIn 0.5s ease-out;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .planner-list h2, .canvas-section h2, .strategic-drive h2, .node-list h3, .analytics-section h3, .prioritization-toolbar h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-shadow: var(--glow);
+        }
+        
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .input-group input, .input-group select {
+            flex: 1 1 150px;
+            padding: 10px;
+            border: 1px solid rgba(0, 123, 255, 0.3);
+            border-radius: var(--border-radius);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        .input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .input-group input:focus, .input-group select:focus {
+            border-color: var(--primary-color);
+            box-shadow: var(--glow);
+            outline: none;
+        }
+        
+        .planner-list ul {
+            list-style: none;
+        }
+        
+        .planner-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+        
+        .planner-list li span {
+            cursor: pointer;
+        }
+        
+        .planner-list li span:hover {
+            color: #00DDEB;
+        }
+        
+        .canvas-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-top: 10px;
+            width: 100%;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            transition: var(--transition);
+            text-transform: uppercase;
+        }
+        
+        .btn-primary {
+            background: var(--accent-gradient);
+            color: white;
+            box-shadow: var(--glow);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(0, 123, 255, 0.7);
+        }
+        
+        .btn-secondary {
+            background: rgba(108, 117, 125, 0.2);
+            color: #FFD700;
+            border: 1px solid rgba(108, 117, 125, 0.5);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(108, 117, 125, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 0 10px rgba(108, 117, 125, 0.5);
+        }
+        
+        .canvas-container {
+            width: 100%;
+            margin-top: 10px;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--glow);
+        }
+        
+        .node-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+        
+        .node-table th, .node-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .node-table th {
+            background: rgba(0, 123, 255, 0.2);
+            color: #00DDEB;
+        }
+        
+        .node-table tr {
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .node-table tr:hover {
+            background: rgba(0, 123, 255, 0.1);
+        }
+        
+        .charts-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .chart {
+            flex: 1 1 400px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            box-shadow: var(--glow);
+        }
+        
+        .chart h4 {
+            margin-bottom: 10px;
+            color: #00DDEB;
+            text-align: center;
+        }
+        
+        .no-planner-message {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .text-mode-instructions, .connection-instructions {
+            background: rgba(0, 123, 255, 0.1);
+            padding: 10px;
+            border-radius: var(--border-radius);
+            margin-top: 10px;
+            width: 100%;
+        }
+        
+        .text-mode-instructions p, .connection-instructions p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        @media (max-width: 768px) {
+            .app-container {
+                margin: 0;
+                padding: 10px;
+            }
+            
+            .app-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .input-group, .canvas-controls, .toolbar, .prioritization-toolbar {
+                flex-direction: column;
+            }
+            
+            .app-header h1 {
+                font-size: 22px;
+            }
+            
+            .charts-container {
+                flex-direction: column;
+            }
+        }
+        
+        /* Testing Console Styles */
+        .console-container {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 400px;
+            height: 300px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-top-left-radius: 8px;
+            border-left: 1px solid #007BFF;
+            border-top: 1px solid #007BFF;
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            transform: translateY(270px);
+        }
+        
+        .console-container.expanded {
+            transform: translateY(0);
+        }
+        
+        .console-header {
+            padding: 5px 10px;
+            background: linear-gradient(90deg, #007BFF, #00DDEB);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border-top-left-radius: 8px;
+        }
+        
+        .console-header h3 {
+            margin: 0;
+            font-size: 14px;
+            color: white;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+        
+        .console-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #00ff00;
+        }
+        
+        .console-input {
+            display: flex;
+            border-top: 1px solid #007BFF;
+            padding: 5px;
+        }
+        
+        .console-input input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.5);
+            border: none;
+            color: #00ff00;
+            font-family: monospace;
+            padding: 5px;
+            outline: none;
+        }
+        
+        .console-input button {
+            background: #007BFF;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            margin-left: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        
+        .console-log {
+            margin: 2px 0;
+            word-wrap: break-word;
+        }
+        
+        .log-info {
+            color: #00ff00;
+        }
+        
+        .log-error {
+            color: #ff4444;
+        }
+        
+        .log-warn {
+            color: #ffbb33;
+        }
+        
+        .log-debug {
+            color: #33b5e5;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="app-header">
+            <h1>Planner & Strategic Drive</h1>
+            <div class="toggle-space">
+                <button id="plannerDriveBtn" class="btn btn-primary">Planner Drive</button>
+                <button id="strategicDriveBtn" class="btn btn-secondary">Strategic Drive</button>
+            </div>
+        </div>
+
+        <div id="plannerDrive" class="planner-drive">
+            <div class="planner-list">
+                <h2>Planners</h2>
+                <div class="input-group">
+                    <input type="text" id="plannerName" placeholder="New Planner Name">
+                    <button id="createPlannerBtn" class="btn btn-primary">Create Planner</button>
+                </div>
+                <ul id="plannerList"></ul>
+            </div>
+
+            <div id="canvasSection" class="canvas-section" style="display: none;">
+                <h2 id="canvasTitle">Canvas</h2>
+                <div class="canvas-controls">
+                    <button id="textModeBtn" class="btn btn-primary">Text Mode</button>
+                    <button id="visualModeBtn" class="btn btn-secondary">Visual Mode</button>
+                    
+                    <div id="textToolbar" class="toolbar">
+                        <input type="text" id="textInput" placeholder="Type text and click on canvas to position cursor">
+                        <select id="fontSizeSelect">
+                            <option value="12">12px</option>
+                            <option value="16" selected>16px</option>
+                            <option value="20">20px</option>
+                            <option value="24">24px</option>
+                        </select>
+                        <label>
+                            <input type="checkbox" id="boldCheckbox"> Bold
+                        </label>
+                        <input type="color" id="colorPicker" value="#ffffff">
+                        <div class="text-mode-instructions">
+                            <p>Click on canvas to position cursor, then type and press Enter to add text</p>
+                        </div>
+                    </div>
+
+                    <div id="visualToolbar" class="toolbar" style="display: none;">
+                        <button id="addNodeBtn" class="btn btn-primary">Add Node</button>
+                        <button id="connectNodesBtn" class="btn btn-secondary">Connect Nodes</button>
+                        <button id="renameNodeBtn" class="btn btn-secondary">Rename Node</button>
+                        <button id="deleteNodeBtn" class="btn btn-secondary">Delete Node</button>
+                        <button id="clearAllNodesBtn" class="btn btn-secondary">Clear All Nodes</button>
+                        <div id="connectionInstructions" class="connection-instructions" style="display: none;">
+                            <p>Click on a target node to create a connection from source node <span id="sourceNodeLabel"></span></p>
+                        </div>
+                    </div>
+                </div>
+                <div id="canvasContainer" class="canvas-container"></div>
+            </div>
+        </div>
+
+        <div id="strategicDrive" class="strategic-drive" style="display: none;">
+            <h2>Strategic Drive</h2>
+            <div id="noPlannerMessage" class="no-planner-message">
+                <p>Please select a planner from the Planner Drive to view analytics.</p>
+            </div>
+
+            <div id="strategicContent" style="display: none;">
+                <div class="current-planner-info">
+                    <h3 id="currentPlannerTitle">Current Planner: </h3>
+                    <p id="totalNodesInfo">Total Nodes: 0</p>
+                </div>
+
+                <div class="prioritization-toolbar">
+                    <h3>Prioritize Tasks</h3>
+                    <div class="input-group">
+                        <input type="text" id="nodeIdInput" placeholder="Node ID">
+                        <select id="prioritySelect">
+                            <option value="1">High Priority</option>
+                            <option value="2">Medium Priority</option>
+                            <option value="3">Low Priority</option>
+                        </select>
+                        <button id="applyPriorityBtn" class="btn btn-primary">Apply Priority</button>
+                        <button id="toggleCompletionBtn" class="btn btn-secondary">Toggle Completion</button>
+                    </div>
+                </div>
+
+                <div class="node-list">
+                    <h3>Nodes</h3>
+                    <table class="node-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="nodeTableBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="analytics-section">
+                    <h3>Analytics</h3>
+                    <div class="charts-container">
+                        <div class="chart">
+                            <h4>Priority Distribution</h4>
+                            <canvas id="priorityChart"></canvas>
+                        </div>
+                        <div class="chart">
+                            <h4>Completion Status</h4>
+                            <canvas id="completionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Testing Console -->
+    <div class="console-container" id="testingConsole">
+        <div class="console-header" id="consoleHeader">
+            <h3>Testing Console</h3>
+            <span id="consoleToggle">▲</span>
+        </div>
+        <div class="console-content" id="consoleContent"></div>
+        <div class="console-input">
+            <input type="text" id="consoleInput" placeholder="Enter command...">
+            <button id="consoleRunBtn">Run</button>
+        </div>
+    </div>
+    
+    <script src="datastore.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // Testing Console Implementation
+        (function() {
+            const console = {
+                container: document.getElementById('testingConsole'),
+                header: document.getElementById('consoleHeader'),
+                toggle: document.getElementById('consoleToggle'),
+                content: document.getElementById('consoleContent'),
+                input: document.getElementById('consoleInput'),
+                runBtn: document.getElementById('consoleRunBtn'),
+                expanded: false,
+                
+                init: function() {
+                    // Toggle console expansion
+                    this.header.addEventListener('click', () => {
+                        this.expanded = !this.expanded;
+                        this.container.classList.toggle('expanded', this.expanded);
+                        this.toggle.textContent = this.expanded ? '▼' : '▲';
+                    });
+                    
+                    // Run command on button click
+                    this.runBtn.addEventListener('click', () => {
+                        this.executeCommand();
+                    });
+                    
+                    // Run command on Enter key
+                    this.input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            this.executeCommand();
+                        }
+                    });
+                    
+                    // Override console.log and related methods
+                    this.overrideConsole();
+                    
+                    // Log initialization
+                    this.log('Testing Console initialized', 'info');
+                },
+                
+                executeCommand: function() {
+                    const command = this.input.value.trim();
+                    if (!command) return;
+                    
+                    this.log(`> ${command}`, 'debug');
+                    
+                    try {
+                        // Execute the command and get the result
+                        const result = eval(command);
+                        this.log(result, 'info');
+                    } catch (error) {
+                        this.log(`Error: ${error.message}`, 'error');
+                    }
+                    
+                    this.input.value = '';
+                },
+                
+                log: function(message, type = 'info') {
+                    const logElement = document.createElement('div');
+                    logElement.className = `console-log log-${type}`;
+                    
+                    // Format objects and arrays for better readability
+                    if (typeof message === 'object' && message !== null) {
+                        try {
+                            message = JSON.stringify(message, null, 2);
+                        } catch (e) {
+                            message = message.toString();
+                        }
+                    }
+                    
+                    logElement.textContent = message;
+                    this.content.appendChild(logElement);
+                    this.content.scrollTop = this.content.scrollHeight;
+                },
+                
+                overrideConsole: function() {
+                    const originalLog = window.console.log;
+                    const originalError = window.console.error;
+                    const originalWarn = window.console.warn;
+                    const originalDebug = window.console.debug;
+                    const self = this;
+                    
+                    window.console.log = function() {
+                        originalLog.apply(console, arguments);
+                        self.log(Array.from(arguments).join(' '), 'info');
+                    };
+                    
+                    window.console.error = function() {
+                        originalError.apply(console, arguments);
+                        self.log(Array.from(arguments).join(' '), 'error');
+                    };
+                    
+                    window.console.warn = function() {
+                        originalWarn.apply(console, arguments);
+                        self.log(Array.from(arguments).join(' '), 'warn');
+                    };
+                    
+                    window.console.debug = function() {
+                        originalDebug.apply(console, arguments);
+                        self.log(Array.from(arguments).join(' '), 'debug');
+                    };
+                }
+            };
+            
+            // Initialize the console when the page loads
+            document.addEventListener('DOMContentLoaded', () => {
+                console.init();
+            });
+        })();
+    </script>
+</body>
+</html>

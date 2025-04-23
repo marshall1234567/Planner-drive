@@ -1,0 +1,10 @@
+# Netlify configuration file
+
+[build]
+  publish = "/"  # The directory to publish (root in this case)
+
+# Redirects and headers
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
